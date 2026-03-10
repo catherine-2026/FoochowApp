@@ -1,0 +1,1283 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Speak Foochow</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&amp;family=Crimson+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <style>
+    .font-chinese { font-family: 'Noto Serif SC', serif; }
+    .font-body { font-family: 'Crimson Pro', Georgia, serif; }
+    .card-hover { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15); }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    .pattern-bg { background-image: radial-gradient(circle at 20% 80%, rgba(185, 28, 28, 0.05) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(185, 28, 28, 0.05) 0%, transparent 50%); }
+    .scroll-container { scroll-behavior: smooth; }
+    .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    .game-card { cursor: pointer; transition: all 0.3s; }
+    .game-card:hover { transform: scale(1.05); }
+    .game-card.selected { box-shadow: 0 0 0 4px #b91c1c; }
+    .flip-card { perspective: 1000px; width: 120px; height: 120px; }
+    .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+    .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+    .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: bold; }
+    .flip-card-front { background-color: #dbeafe; color: #0c4a6e; }
+    .flip-card-back { background-color: #fef3c7; color: #92400e; transform: rotateY(180deg); }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto pattern-bg" style="background-color: #faf7f2;">
+   <header class="sticky top-0 z-50 backdrop-blur-md border-b" style="background-color: rgba(250, 247, 242, 0.95); border-color: #e8e0d5;">
+    <div class="max-w-6xl mx-auto px-4 py-4">
+     <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+       <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background-color: #b91c1c;">
+        <span class="text-2xl font-chinese" style="color: #faf7f2;">福</span>
+       </div>
+       <div>
+        <h1 id="main-title" class="text-2xl font-chinese font-bold" style="color: #1f2937;">学说福州话</h1>
+        <p class="text-sm font-body" style="color: #6b7280;">Speak Foochow</p>
+       </div>
+      </div>
+      <div class="flex items-center gap-4">
+       <span class="font-body text-sm" style="color: #6b7280;">👥 Visitors: <span id="visitor-count" style="font-weight: bold; color: #1f2937;">0</span></span> <span class="px-4 py-2 rounded-lg font-body text-sm" style="background-color: #dbeafe; color: #0c4a6e;">✉️ catherinenguoi@yahoo.com</span> <button id="admin-btn" onclick="toggleAdminMode()" class="px-4 py-2 rounded-lg font-body text-sm" style="background-color: #fef3c7; color: #92400e; border: none; cursor: pointer;">🔒 Admin</button>
+      </div>
+     </div>
+    </div>
+   </header>
+   <nav class="sticky top-20 z-40 border-b overflow-x-auto" style="background-color: #faf7f2; border-color: #e8e0d5;">
+    <div class="max-w-6xl mx-auto px-4">
+     <div class="flex gap-1 scroll-container py-2" id="tab-container">
+      <button onclick="switchTab('greetings')" data-tab="greetings" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: #b91c1c; color: #faf7f2;">🤝 Greetings</button> <button onclick="switchTab('daily')" data-tab="daily" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: transparent; color: #6b7280;">💬 Daily</button> <button onclick="switchTab('food')" data-tab="food" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: transparent; color: #6b7280;">🍽️ Food</button> <button onclick="switchTab('family')" data-tab="family" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: transparent; color: #6b7280;">👨‍👩‍👧 Family</button> <button onclick="switchTab('numbers')" data-tab="numbers" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: transparent; color: #6b7280;">🔢 Numbers</button> <button onclick="switchTab('shopping')" data-tab="shopping" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: transparent; color: #6b7280;">🛍️ Shopping</button> <button onclick="switchTab('health')" data-tab="health" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: transparent; color: #6b7280;">🏥 Health</button> <button onclick="switchTab('travel')" data-tab="travel" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: transparent; color: #6b7280;">✈️ Travel</button> <button onclick="switchTab('dialogue')" data-tab="dialogue" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: transparent; color: #6b7280;">💭 Dialogues</button> <button onclick="switchTab('games')" data-tab="games" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: transparent; color: #6b7280;">🎮 Games</button> <button id="admin-tab-btn" onclick="switchTab('admin')" data-tab="admin" class="tab-btn px-4 py-2 rounded-lg font-body text-sm whitespace-nowrap transition-all" style="background-color: transparent; color: #6b7280; display: none;">🔧 Admin</button>
+     </div>
+    </div>
+   </nav>
+   <main class="max-w-6xl mx-auto px-4 py-8">
+    <section id="tab-greetings" class="tab-content">
+     <div class="text-center mb-12 fade-in">
+      <h2 class="text-4xl md:text-5xl font-chinese font-bold mb-4" style="color: #1f2937;">福州话 <span class="font-body text-2xl md:text-3xl" style="color: #6b7280;">Greeting Essentials</span></h2>
+      <p id="welcome-text" class="text-xl font-body max-w-2xl mx-auto" style="color: #4b5563;">Master the fundamentals of speaking Foochow with essential greetings used every day</p>
+     </div>
+     <div class="grid md:grid-cols-2 gap-6" id="greetings-container"></div>
+    </section>
+    <section id="tab-daily" class="tab-content hidden">
+     <h2 class="text-3xl font-chinese font-bold mb-8 text-center fade-in" style="color: #1f2937;">日常用語 <span class="font-body text-xl" style="color: #6b7280;">Daily Phrases</span></h2>
+     <div class="grid md:grid-cols-2 gap-6" id="daily-container"></div>
+    </section>
+    <section id="tab-food" class="tab-content hidden">
+     <h2 class="text-3xl font-chinese font-bold mb-8 text-center fade-in" style="color: #1f2937;">饮食用語 <span class="font-body text-xl" style="color: #6b7280;">Food &amp; Dining</span></h2>
+     <div class="grid md:grid-cols-2 gap-6" id="food-container"></div>
+    </section>
+    <section id="tab-numbers" class="tab-content hidden">
+     <h2 class="text-3xl font-chinese font-bold mb-8 text-center fade-in" style="color: #1f2937;">數字 <span class="font-body text-xl" style="color: #6b7280;">Numbers</span></h2>
+     <div class="grid md:grid-cols-2 gap-6" id="numbers-container"></div>
+    </section>
+    <section id="tab-family" class="tab-content hidden">
+     <h2 class="text-3xl font-chinese font-bold mb-8 text-center fade-in" style="color: #1f2937;">家庭 <span class="font-body text-xl" style="color: #6b7280;">Family</span></h2>
+     <div class="grid md:grid-cols-2 gap-6" id="family-container"></div>
+    </section>
+    <section id="tab-shopping" class="tab-content hidden">
+     <h2 class="text-3xl font-chinese font-bold mb-8 text-center fade-in" style="color: #1f2937;">購物 <span class="font-body text-xl" style="color: #6b7280;">Shopping</span></h2>
+     <div class="grid md:grid-cols-2 gap-6" id="shopping-container"></div>
+    </section>
+    <section id="tab-health" class="tab-content hidden">
+     <h2 class="text-3xl font-chinese font-bold mb-8 text-center fade-in" style="color: #1f2937;">健康 <span class="font-body text-xl" style="color: #6b7280;">Health</span></h2>
+     <div class="grid md:grid-cols-2 gap-6" id="health-container"></div>
+    </section>
+    <section id="tab-travel" class="tab-content hidden">
+     <h2 class="text-3xl font-chinese font-bold mb-8 text-center fade-in" style="color: #1f2937;">旅遊 <span class="font-body text-xl" style="color: #6b7280;">Travel</span></h2>
+     <div class="grid md:grid-cols-2 gap-6" id="travel-container"></div>
+    </section>
+    <section id="tab-dialogue" class="tab-content hidden">
+     <h2 class="text-3xl font-chinese font-bold mb-8 text-center fade-in" style="color: #1f2937;">日常對話 <span class="font-body text-xl" style="color: #6b7280;">Conversations</span></h2>
+     <div id="dialogues-container"></div>
+    </section>
+    <section id="tab-games" class="tab-content hidden">
+     <h2 class="text-3xl font-chinese font-bold mb-8 text-center fade-in" style="color: #1f2937;">🎮 Games <span class="font-body text-xl" style="color: #6b7280;">Learning Fun</span></h2>
+     <div class="grid md:grid-cols-3 gap-6 mb-12" id="games-menu"></div>
+     <div id="game-content"></div>
+    </section>
+    <section id="tab-admin" class="tab-content hidden">
+     <h2 class="text-3xl font-chinese font-bold mb-8 text-center fade-in" style="color: #1f2937;">管理員 <span class="font-body text-xl" style="color: #6b7280;">Admin Panel</span></h2>
+     <div id="admin-container"></div>
+    </section>
+   </main>
+   <footer class="border-t py-6 mt-12" style="background-color: #faf7f2; border-color: #e8e0d5;">
+    <div class="max-w-6xl mx-auto px-4 text-center">
+     <p class="font-body text-sm" style="color: #6b7280;">Learn more about the rich heritage of Foochow 福州</p>
+     <p class="font-body text-xs mt-4" style="color: #9ca3af;">Copyright © 2026 Catherine N.C.L. All Rights Reserved.</p>
+    </div>
+   </footer>
+  </div>
+  <script>
+    const defaultConfig = { 
+      main_title: '学说福州话', 
+      welcome_text: 'Master the fundamentals of speaking Foochow with essential greetings used every day' 
+    };
+    const ADMIN_PASSWORD = 'ahbinguoi';
+    let isAdminLoggedIn = false;
+    let allStoredPhrases = [];
+    let allStoredDialogues = [];
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let visitorCount = 0;
+    let currentGame = null;
+    let gameScore = 0;
+    let gameState = {};
+
+    async function initDataSDK() {
+      const handler = {
+        onDataChanged(data) {
+          allStoredPhrases = data.filter(d => !d.is_dialogue);
+          allStoredDialogues = data.filter(d => d.is_dialogue);
+          if (isAdminLoggedIn) renderAdminPanel();
+        }
+      };
+      const result = await window.dataSdk.init(handler);
+      if (!result.isOk) console.error('Failed to init data SDK');
+    }
+
+    function initVisitorCount() {
+      let count = localStorage.getItem('foochow-visitors');
+      if (!count) count = Math.floor(Math.random() * 100) + 50;
+      visitorCount = parseInt(count) + 1;
+      localStorage.setItem('foochow-visitors', visitorCount);
+      document.getElementById('visitor-count').textContent = visitorCount;
+    }
+
+    function toggleAdminMode() {
+      showModal(`
+        <h3 class="text-2xl font-chinese font-bold mb-6" style="color: #1f2937;">Admin Login</h3>
+        <div class="space-y-4">
+          <input type="password" id="admin-password-input" placeholder="Enter admin password" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
+          <button onclick="verifyAdminPassword()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #b91c1c; color: #faf7f2; border: none; cursor: pointer; font-size: 16px;">Login</button>
+        </div>
+      `);
+    }
+
+    function verifyAdminPassword() {
+      const password = document.getElementById('admin-password-input').value;
+      if (password === ADMIN_PASSWORD) {
+        isAdminLoggedIn = true;
+        document.getElementById('admin-tab-btn').style.display = 'inline-block';
+        closeModal();
+        showNotification('✓ Admin access granted!', '#10b981');
+        switchTab('admin');
+      } else {
+        showNotification('✗ Incorrect password', '#ef4444');
+      }
+    }
+
+    function showNotification(message, color) {
+      const div = document.createElement('div');
+      div.textContent = message;
+      div.style.cssText = `position: fixed; top: 100px; right: 20px; background-color: ${color}; color: white; padding: 12px 20px; border-radius: 8px; z-index: 9999;`;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 2000);
+    }
+
+    function createPhraseCard(phrase, idx) {
+      const hasSavedAudio = phrase.audio_url && phrase.audio_url.length > 0;
+      const backendId = phrase.__backendId || '';
+      return `
+        <div class="card-hover rounded-2xl p-5 fade-in stagger-${(idx % 4) + 1}" style="background-color: #ffffff; border: 1px solid #e8e0d5;">
+          <div class="flex justify-between items-start mb-3">
+            <span class="text-2xl font-chinese" style="color: #1f2937;">${phrase.phrase_chinese}</span>
+            <span class="px-2 py-1 rounded text-xs font-body" style="background-color: #fef3c7; color: #92400e;">${phrase.category || 'Phrase'}</span>
+          </div>
+          <p class="font-body font-medium text-sm" style="color: #b91c1c;">[ ${phrase.phrase_romanized} ]</p>
+          <p class="font-body text-sm mt-2" style="color: #6b7280;">"${phrase.phrase_english}"</p>
+          <button onclick="handlePlayOrRecord('${backendId}', ${hasSavedAudio})" class="mt-3 w-full px-3 py-2 rounded-lg text-xs font-body transition-all" style="background-color: ${hasSavedAudio ? '#d1fae5' : '#fef3c7'}; color: ${hasSavedAudio ? '#166534' : '#92400e'}; border: none; cursor: pointer;">
+            ${hasSavedAudio ? '🔊 Play Audio' : '🎙️ Record Audio'}
+          </button>
+          ${isAdminLoggedIn ? `<button onclick="handleEdit('${backendId}')" class="mt-2 w-full px-3 py-2 rounded-lg text-xs font-body" style="background-color: #dbeafe; color: #0c4a6e; border: none; cursor: pointer;">✏️ Edit</button>` : ''}
+        </div>
+      `;
+    }
+
+    function handlePlayOrRecord(phraseId, hasSavedAudio) {
+      if (hasSavedAudio) {
+        playPhrase(phraseId);
+      } else {
+        recordAudioQuick(phraseId);
+      }
+    }
+
+    function handleEdit(phraseId) {
+      setTimeout(() => {
+        editPhrase(phraseId);
+      }, 0);
+    }
+
+    function playPhrase(phraseId) {
+      if (phraseId && allStoredPhrases.length > 0) {
+        const phrase = allStoredPhrases.find(p => p.__backendId === phraseId);
+        if (phrase && phrase.audio_url) {
+          const audio = new Audio(phrase.audio_url);
+          audio.play();
+        }
+      }
+    }
+
+    function recordAudioQuick(phraseId) {
+      if (!isAdminLoggedIn) {
+        showNotification('Admin login required', '#ef4444');
+        return;
+      }
+      
+      const phrase = allStoredPhrases.find(p => p.__backendId === phraseId);
+      if (!phrase) return;
+
+      showModal(`
+        <h3 class="text-2xl font-chinese font-bold mb-6" style="color: #1f2937;">🎙️ Record Audio</h3>
+        <div class="mb-6 p-4 rounded-lg" style="background-color: #f3f4f6;">
+          <p class="text-lg font-chinese font-bold" style="color: #1f2937;">${phrase.phrase_chinese}</p>
+          <p class="font-body text-sm mt-2" style="color: #6b7280;">[ ${phrase.phrase_romanized} ]</p>
+          <p class="font-body text-sm" style="color: #6b7280;">"${phrase.phrase_english}"</p>
+        </div>
+        <div style="background-color: #fef3c7; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 16px;">
+          <p id="quick-recording-status" class="font-body text-sm" style="color: #92400e;">👈 Click Start Recording, then speak</p>
+        </div>
+        <button id="quick-record-btn" onclick="startQuickRecording()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #86efac; color: #166534; border: none; cursor: pointer; margin-bottom: 8px;">🎙️ Start Recording</button>
+        <button id="quick-stop-btn" onclick="stopQuickRecording()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #f87171; color: white; border: none; cursor: pointer; display: none; margin-bottom: 8px;">⏹️ Stop Recording</button>
+        <button id="quick-save-btn" onclick="saveQuickRecording('${phraseId}')" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #60a5fa; color: white; border: none; cursor: pointer; display: none;">💾 Save Recording</button>
+      `);
+    }
+
+    async function startQuickRecording() {
+      try {
+        recordedChunks = [];
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
+        mediaRecorder.start();
+        document.getElementById('quick-record-btn').style.display = 'none';
+        document.getElementById('quick-stop-btn').style.display = 'block';
+        document.getElementById('quick-recording-status').textContent = '🔴 Recording... Speak now';
+      } catch (err) {
+        showNotification('❌ Allow microphone access to record', '#ef4444');
+      }
+    }
+
+    function stopQuickRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        document.getElementById('quick-record-btn').style.display = 'none';
+        document.getElementById('quick-stop-btn').style.display = 'none';
+        document.getElementById('quick-save-btn').style.display = 'block';
+        document.getElementById('quick-recording-status').textContent = '✅ Recording saved! Ready to submit';
+      }
+    }
+
+    async function saveQuickRecording(phraseId) {
+      if (recordedChunks.length === 0) {
+        showNotification('No audio recorded', '#ef4444');
+        return;
+      }
+
+      const phrase = allStoredPhrases.find(p => p.__backendId === phraseId);
+      if (!phrase) return;
+
+      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64Audio = reader.result;
+        const updated = { ...phrase, audio_url: base64Audio };
+        const result = await window.dataSdk.update(updated);
+
+        if (result.isOk) {
+          showNotification('✓ Audio saved!', '#10b981');
+          closeModal();
+        } else {
+          showNotification('Failed to save audio', '#ef4444');
+        }
+      };
+      reader.readAsDataURL(blob);
+    }
+
+    function renderPhrasesFor(containerId, category) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      
+      let displayPhrases = allStoredPhrases.filter(p => p.category === category);
+      if (displayPhrases.length === 0) {
+        displayPhrases = STARTER_PHRASES.filter(p => p.category === category);
+      }
+      
+      container.innerHTML = displayPhrases.map((phrase, idx) => createPhraseCard(phrase, idx)).join('');
+    }
+
+    function renderDialogues() {
+      const container = document.getElementById('dialogues-container');
+      const dialoguesToDisplay = allStoredDialogues.length > 0 ? allStoredDialogues : STARTER_DIALOGUES;
+      const dialogues = dialoguesToDisplay.reduce((acc, line) => {
+        const dialogId = line.dialogue_id || 'default';
+        if (!acc[dialogId]) acc[dialogId] = [];
+        acc[dialogId].push(line);
+        return acc;
+      }, {});
+
+      container.innerHTML = Object.entries(dialogues).map(([dialogId, lines]) => `
+        <div class="rounded-2xl p-8 mb-6 fade-in" style="background-color: #ffffff; border: 1px solid #e8e0d5;">
+          <h3 class="text-xl font-chinese font-bold mb-6" style="color: #1f2937;">Conversation ${dialogId}</h3>
+          <div class="space-y-4">
+            ${lines.map((line) => `
+              <div class="p-4 rounded-lg" style="background-color: ${line.speaker === 'A' ? '#fef3c7' : '#dbeafe'};">
+                <div class="flex justify-between items-start mb-2">
+                  <span class="font-bold" style="color: #1f2937;">Person ${line.speaker}</span>
+                </div>
+                <p class="text-lg font-chinese font-semibold" style="color: #1f2937;">${line.phrase_chinese}</p>
+                <p class="font-body text-sm" style="color: #6b7280;">[ ${line.phrase_romanized} ]</p>
+                <p class="font-body text-sm mt-1" style="color: #6b7280;">"${line.phrase_english}"</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderGamesMenu() {
+      const container = document.getElementById('games-menu');
+      container.innerHTML = `
+        <div class="card-hover rounded-2xl p-8 text-center fade-in stagger-1" style="background-color: #ffffff; border: 1px solid #e8e0d5; cursor: pointer;" onclick="startGame('listen')">
+          <div class="text-5xl mb-4">👂</div>
+          <h3 class="text-xl font-chinese font-bold mb-3" style="color: #1f2937;">Listen &amp; Choose</h3>
+          <p class="font-body text-sm" style="color: #6b7280;">Hear the phrase, pick the right one</p>
+        </div>
+        <div class="card-hover rounded-2xl p-8 text-center fade-in stagger-2" style="background-color: #ffffff; border: 1px solid #e8e0d5; cursor: pointer;" onclick="startGame('pronounce')">
+          <div class="text-5xl mb-4">🎤</div>
+          <h3 class="text-xl font-chinese font-bold mb-3" style="color: #1f2937;">Pronounce &amp; Match</h3>
+          <p class="font-body text-sm" style="color: #6b7280;">Record yourself and match phonetically</p>
+        </div>
+        <div class="card-hover rounded-2xl p-8 text-center fade-in stagger-3" style="background-color: #ffffff; border: 1px solid #e8e0d5; cursor: pointer;" onclick="startGame('matching')">
+          <div class="text-5xl mb-4">🃏</div>
+          <h3 class="text-xl font-chinese font-bold mb-3" style="color: #1f2937;">Memory Match</h3>
+          <p class="font-body text-sm" style="color: #6b7280;">Flip cards and find matching pairs</p>
+        </div>
+      `;
+    }
+
+    function startGame(gameType) {
+      currentGame = gameType;
+      gameScore = 0;
+      gameState = {};
+      const container = document.getElementById('game-content');
+      
+      if (gameType === 'listen') startListenGame(container);
+      else if (gameType === 'pronounce') startPronounceGame(container);
+      else if (gameType === 'matching') startMatchingGame(container);
+    }
+
+    function startListenGame(container) {
+      const gamePhrases = allStoredPhrases.filter(p => p.audio_url && p.audio_url.length > 0).slice(0, 5);
+      if (gamePhrases.length === 0) {
+        container.innerHTML = '<p class="text-center font-body text-lg" style="color: #6b7280;">No recorded phrases available yet. Admin needs to record some!</p>';
+        return;
+      }
+
+      const currentPhrase = gamePhrases[gameState.currentIndex || 0];
+      const options = [...gamePhrases].sort(() => Math.random() - 0.5).slice(0, 4);
+      if (!options.find(o => o.__backendId === currentPhrase.__backendId)) {
+        options[0] = currentPhrase;
+      }
+
+      container.innerHTML = `
+        <div class="max-w-2xl mx-auto rounded-2xl p-8" style="background-color: #ffffff; border: 1px solid #e8e0d5;">
+          <div class="text-center mb-8">
+            <h3 class="text-2xl font-chinese font-bold mb-4" style="color: #1f2937;">👂 Listen &amp; Choose</h3>
+            <p class="font-body text-sm mb-6" style="color: #6b7280;">Listen to the phrase and select the correct one</p>
+            <button onclick="playListenGamePhrase('${currentPhrase.__backendId}')" class="px-8 py-4 rounded-lg font-body font-bold text-lg" style="background-color: #10b981; color: white; border: none; cursor: pointer;">🔊 Play Audio</button>
+            <p class="font-body text-xs mt-4" style="color: #9ca3af;">Score: ${gameState.score || 0}/5</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            ${options.map(opt => `
+              <button onclick="checkListenAnswer('${opt.__backendId}', '${currentPhrase.__backendId}')" class="p-4 rounded-lg font-body font-bold transition-all" style="background-color: #fef3c7; color: #92400e; border: 2px solid #fef3c7; cursor: pointer;">
+                <p class="text-lg font-chinese mb-2">${opt.phrase_chinese}</p>
+                <p class="text-xs">${opt.phrase_english}</p>
+              </button>
+            `).join('')}
+          </div>
+          <button onclick="endGame()" class="w-full px-4 py-3 rounded-lg font-body" style="background-color: #e5e7eb; color: #1f2937; border: none; cursor: pointer;">Back to Games</button>
+        </div>
+      `;
+    }
+
+    function playListenGamePhrase(phraseId) {
+      const phrase = allStoredPhrases.find(p => p.__backendId === phraseId);
+      if (phrase && phrase.audio_url) {
+        const audio = new Audio(phrase.audio_url);
+        audio.play();
+      }
+    }
+
+    function checkListenAnswer(selected, correct) {
+      if (selected === correct) {
+        gameState.score = (gameState.score || 0) + 1;
+        showNotification('✓ Correct!', '#10b981');
+        gameState.currentIndex = (gameState.currentIndex || 0) + 1;
+        if (gameState.currentIndex >= 5) {
+          endGame();
+          return;
+        }
+      } else {
+        showNotification('✗ Try again', '#ef4444');
+      }
+      startGame('listen');
+    }
+
+    function startPronounceGame(container) {
+      container.innerHTML = `
+        <div class="max-w-2xl mx-auto rounded-2xl p-8" style="background-color: #ffffff; border: 1px solid #e8e0d5;">
+          <h3 class="text-2xl font-chinese font-bold mb-6 text-center" style="color: #1f2937;">🎤 Pronounce &amp; Match</h3>
+          <p class="font-body text-center mb-8" style="color: #6b7280;">This game requires admin to record sample pronunciations first. Try the other games!</p>
+          <button onclick="endGame()" class="w-full px-4 py-3 rounded-lg font-body" style="background-color: #e5e7eb; color: #1f2937; border: none; cursor: pointer;">Back to Games</button>
+        </div>
+      `;
+    }
+
+    function startMatchingGame(container) {
+      const gamePhrases = (allStoredPhrases.filter(p => p.audio_url).slice(0, 6) || STARTER_PHRASES.slice(0, 6)).map((p, i) => ({
+        ...p,
+        cardId: i,
+        matched: false
+      }));
+
+      if (!gameState.cards) {
+        gameState.cards = [...gamePhrases, ...gamePhrases.map((p, i) => ({ ...p, cardId: i + 100 }))].sort(() => Math.random() - 0.5);
+        gameState.flipped = [];
+        gameState.pairs = 0;
+      }
+
+      const cards = gameState.cards;
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto">
+          <div class="text-center mb-8">
+            <h3 class="text-2xl font-chinese font-bold mb-2" style="color: #1f2937;">🃏 Memory Match</h3>
+            <p class="font-body text-sm mb-4" style="color: #6b7280;">Match pairs of phrases</p>
+            <p class="font-body text-sm" style="color: #6b7280;">Pairs found: ${gameState.pairs || 0}/${gamePhrases.length}</p>
+          </div>
+          <div class="grid grid-cols-4 gap-4 mb-8">
+            ${cards.map((card, idx) => {
+              const isFlipped = gameState.flipped.includes(idx);
+              const matched = cards.every(c => c.cardId === card.cardId || gameState.matched?.includes(c.cardId));
+              return `
+                <div class="flip-card ${isFlipped ? 'flipped' : ''}" onclick="flipMemoryCard(${idx})">
+                  <div class="flip-card-inner">
+                    <div class="flip-card-front">?</div>
+                    <div class="flip-card-back">
+                      <div style="text-align: center;">
+                        <p class="font-chinese font-bold text-sm">${card.phrase_chinese}</p>
+                        <p class="text-xs mt-1">${card.phrase_english.substring(0, 8)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <button onclick="endGame()" class="w-full px-4 py-3 rounded-lg font-body" style="background-color: #e5e7eb; color: #1f2937; border: none; cursor: pointer;">Back to Games</button>
+        </div>
+      `;
+    }
+
+    function flipMemoryCard(idx) {
+      if (gameState.flipped.length >= 2) return;
+      if (gameState.flipped.includes(idx)) return;
+
+      gameState.flipped.push(idx);
+
+      if (gameState.flipped.length === 2) {
+        const card1 = gameState.cards[gameState.flipped[0]];
+        const card2 = gameState.cards[gameState.flipped[1]];
+
+        if (card1.phrase_chinese === card2.phrase_chinese && card1.cardId !== card2.cardId) {
+          gameState.pairs = (gameState.pairs || 0) + 1;
+          gameState.matched = gameState.matched || [];
+          gameState.matched.push(card1.cardId, card2.cardId);
+          showNotification('✓ Match!', '#10b981');
+          gameState.flipped = [];
+        } else {
+          setTimeout(() => {
+            gameState.flipped = [];
+            startMatchingGame(document.getElementById('game-content'));
+          }, 1000);
+        }
+      }
+
+      startMatchingGame(document.getElementById('game-content'));
+    }
+
+    function endGame() {
+      document.getElementById('game-content').innerHTML = '';
+      renderGamesMenu();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.style.backgroundColor = 'transparent';
+        btn.style.color = '#6b7280';
+      });
+
+      const activeContent = document.getElementById(`tab-${tabId}`);
+      const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
+      if (activeContent) activeContent.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.style.backgroundColor = '#b91c1c';
+        activeBtn.style.color = '#faf7f2';
+      }
+
+      if (tabId === 'greetings') renderPhrasesFor('greetings-container', 'greetings');
+      else if (tabId === 'daily') renderPhrasesFor('daily-container', 'daily');
+      else if (tabId === 'food') renderPhrasesFor('food-container', 'food');
+      else if (tabId === 'numbers') renderPhrasesFor('numbers-container', 'numbers');
+      else if (tabId === 'family') renderPhrasesFor('family-container', 'family');
+      else if (tabId === 'shopping') renderPhrasesFor('shopping-container', 'shopping');
+      else if (tabId === 'health') renderPhrasesFor('health-container', 'health');
+      else if (tabId === 'travel') renderPhrasesFor('travel-container', 'travel');
+      else if (tabId === 'dialogue') renderDialogues();
+      else if (tabId === 'games') renderGamesMenu();
+      else if (tabId === 'admin') renderAdminPanel();
+    }
+
+    function renderAdminPanel() {
+      const container = document.getElementById('admin-container');
+      const recordedCount = allStoredPhrases.length;
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto">
+          <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <div class="rounded-2xl p-8" style="background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);">
+              <h3 class="text-2xl font-chinese font-bold mb-4" style="color: #faf7f2;">🎙️ Record Phrase</h3>
+              <p style="color: #fecaca; margin-bottom: 16px;">Record a new phrase or word with audio</p>
+              <button onclick="openRecordPhraseModal()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #faf7f2; color: #b91c1c; border: none; cursor: pointer;">+ Add New Phrase</button>
+            </div>
+            <div class="rounded-2xl p-8" style="background: linear-gradient(135deg, #7c2d12 0%, #5a1f0a 100%);">
+              <h3 class="text-2xl font-chinese font-bold mb-4" style="color: #fef3c7;">💭 Record Dialogue</h3>
+              <p style="color: #fed7aa; margin-bottom: 16px;">Record a full conversation line by line</p>
+              <button onclick="openRecordDialogueModal()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #fef3c7; color: #92400e; border: none; cursor: pointer;">+ Add Dialogue</button>
+            </div>
+          </div>
+          <div class="rounded-2xl p-8" style="background-color: #ffffff; border: 1px solid #e8e0d5;">
+            <h4 class="text-xl font-chinese font-bold mb-6" style="color: #1f2937;">📋 All Phrases (${recordedCount} recorded)</h4>
+            <div id="admin-recordings-list" class="space-y-4"></div>
+          </div>
+        </div>
+      `;
+      
+      const recordingsList = document.getElementById('admin-recordings-list');
+      recordingsList.innerHTML = '';
+      
+      // Display ALL phrases - both stored and starter phrases
+      const phrasesToDisplay = allStoredPhrases.length > 0 ? allStoredPhrases : STARTER_PHRASES;
+      
+      phrasesToDisplay.forEach(phrase => {
+        const card = document.createElement('div');
+        card.style.cssText = 'padding: 16px; background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; gap: 12px;';
+        
+        const leftDiv = document.createElement('div');
+        leftDiv.style.cssText = 'flex: 1; min-width: 0;';
+        leftDiv.innerHTML = `
+          <p class="font-chinese font-bold" style="color: #1f2937; font-size: 16px;">${phrase.phrase_chinese}</p>
+          <p class="font-body text-sm" style="color: #6b7280;">[ ${phrase.phrase_romanized} ] - "${phrase.phrase_english}"</p>
+          <p class="font-body text-xs" style="color: #9ca3af; margin-top: 4px;">Category: ${phrase.category} ${phrase.audio_url ? '• ✅ Has audio' : '• ⚪ No audio'}${phrase.__backendId ? '' : ' • (Template)'}</p>
+        `;
+        
+        const rightDiv = document.createElement('div');
+        rightDiv.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;';
+        
+        if (phrase.audio_url) {
+          const playBtn = document.createElement('button');
+          playBtn.textContent = '🔊 Play';
+          playBtn.style.cssText = 'padding: 8px 12px; border-radius: 6px; font-size: 12px; background-color: #d1fae5; color: #166534; border: none; cursor: pointer; white-space: nowrap;';
+          playBtn.onclick = () => playPhrase(phrase.__backendId);
+          rightDiv.appendChild(playBtn);
+        }
+        
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️ Edit';
+        editBtn.style.cssText = 'padding: 8px 12px; border-radius: 6px; font-size: 12px; background-color: #dbeafe; color: #0c4a6e; border: none; cursor: pointer; white-space: nowrap;';
+        editBtn.onclick = () => handleEditPhrase(phrase);
+        rightDiv.appendChild(editBtn);
+        
+        if (phrase.__backendId) {
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = '🗑️ Delete';
+          deleteBtn.style.cssText = 'padding: 8px 12px; border-radius: 6px; font-size: 12px; background-color: #fee2e2; color: #991b1b; border: none; cursor: pointer; white-space: nowrap;';
+          deleteBtn.onclick = () => deletePhrase(phrase.__backendId);
+          rightDiv.appendChild(deleteBtn);
+        }
+        
+        card.appendChild(leftDiv);
+        card.appendChild(rightDiv);
+        recordingsList.appendChild(card);
+      });
+    }
+
+    function handleEditPhrase(phrase) {
+      if (!phrase.__backendId) {
+        // This is a starter phrase, convert to editable
+        editPhrase(phrase);
+      } else {
+        // This is a stored phrase, edit directly
+        editPhrase(phrase);
+      }
+    }
+
+    function showModal(content) {
+      // Remove existing modal if present
+      const existingModal = document.getElementById('custom-modal');
+      if (existingModal) existingModal.remove();
+      
+      const modal = document.createElement('div');
+      modal.id = 'custom-modal';
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 50000; padding: 20px;';
+      
+      const modalContent = document.createElement('div');
+      modalContent.style.cssText = 'background-color: #ffffff; border-radius: 16px; padding: 40px; max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);';
+      modalContent.innerHTML = `
+        ${content}
+        <button onclick="closeModal()" class="mt-6 w-full px-4 py-3 rounded-lg font-body" style="background-color: #e5e7eb; color: #1f2937; border: none; cursor: pointer;">Close</button>
+      `;
+      
+      modal.appendChild(modalContent);
+      document.body.appendChild(modal);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('custom-modal');
+      if (modal) modal.remove();
+    }
+
+    function openRecordPhraseModal() {
+      showModal(`
+        <h3 class="text-2xl font-chinese font-bold mb-6" style="color: #1f2937;">🎙️ Record New Phrase</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">Chinese Characters</label>
+            <input type="text" id="phrase-chinese" placeholder="e.g., 你好" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+          </div>
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">Romanized (how to pronounce)</label>
+            <input type="text" id="phrase-romanized" placeholder="e.g., Nṳ̄ hō̤" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+          </div>
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">English Translation</label>
+            <input type="text" id="phrase-english" placeholder="e.g., Hello" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+          </div>
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">Category</label>
+            <select id="phrase-category" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+              <option value="greetings">🤝 Greetings</option>
+              <option value="daily">💬 Daily</option>
+              <option value="food">🍽️ Food</option>
+              <option value="family">👨‍👩‍👧 Family</option>
+              <option value="numbers">🔢 Numbers</option>
+              <option value="shopping">🛍️ Shopping</option>
+              <option value="health">🏥 Health</option>
+              <option value="travel">✈️ Travel</option>
+            </select>
+          </div>
+          <div style="background-color: #fef3c7; padding: 12px; border-radius: 8px; text-align: center;">
+            <p id="recording-status" class="font-body text-sm" style="color: #92400e;">👈 Fill in details, then click Start Recording</p>
+          </div>
+          <button id="record-phrase-btn" onclick="startPhraseRecording()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #86efac; color: #166534; border: none; cursor: pointer;">🎙️ Start Recording</button>
+          <button id="stop-phrase-btn" onclick="stopPhraseRecording()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #f87171; color: white; border: none; cursor: pointer; display: none;">⏹️ Stop Recording</button>
+          <button id="save-phrase-btn" onclick="savePhraseRecording()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #60a5fa; color: white; border: none; cursor: pointer; display: none;">💾 Save Phrase to Sheet</button>
+        </div>
+      `);
+    }
+
+    function openRecordDialogueModal() {
+      showModal(`
+        <h3 class="text-2xl font-chinese font-bold mb-6" style="color: #1f2937;">💭 Record Dialogue Line</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">Dialogue ID (e.g., greeting-1)</label>
+            <input type="text" id="dialogue-id" placeholder="e.g., greeting-1" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+          </div>
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">Who's Speaking?</label>
+            <select id="dialogue-speaker" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+              <option value="A">👤 Person A</option>
+              <option value="B">👤 Person B</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">Chinese Characters</label>
+            <input type="text" id="dialogue-chinese" placeholder="e.g., 你好" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+          </div>
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">Romanized</label>
+            <input type="text" id="dialogue-romanized" placeholder="e.g., Nṳ̄ hō̤" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+          </div>
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">English Translation</label>
+            <input type="text" id="dialogue-english" placeholder="e.g., Hello" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+          </div>
+          <div style="background-color: #fef3c7; padding: 12px; border-radius: 8px; text-align: center;">
+            <p id="dialogue-recording-status" class="font-body text-sm" style="color: #92400e;">👈 Fill in details, then click Start Recording</p>
+          </div>
+          <button id="record-dialogue-btn" onclick="startDialogueRecording()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #86efac; color: #166534; border: none; cursor: pointer;">🎙️ Start Recording</button>
+          <button id="stop-dialogue-btn" onclick="stopDialogueRecording()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #f87171; color: white; border: none; cursor: pointer; display: none;">⏹️ Stop Recording</button>
+          <button id="save-dialogue-btn" onclick="saveDialogueRecording()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #60a5fa; color: white; border: none; cursor: pointer; display: none;">💾 Save to Sheet</button>
+        </div>
+      `);
+    }
+
+    async function startPhraseRecording() {
+      try {
+        recordedChunks = [];
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
+        mediaRecorder.start();
+        document.getElementById('record-phrase-btn').style.display = 'none';
+        document.getElementById('stop-phrase-btn').style.display = 'block';
+        document.getElementById('recording-status').textContent = '🔴 Recording... Speak now';
+      } catch (err) {
+        showNotification('❌ Allow microphone access to record', '#ef4444');
+      }
+    }
+
+    async function startDialogueRecording() {
+      try {
+        recordedChunks = [];
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
+        mediaRecorder.start();
+        document.getElementById('record-dialogue-btn').style.display = 'none';
+        document.getElementById('stop-dialogue-btn').style.display = 'block';
+        document.getElementById('dialogue-recording-status').textContent = '🔴 Recording... Speak now';
+      } catch (err) {
+        showNotification('❌ Allow microphone access to record', '#ef4444');
+      }
+    }
+
+    function stopPhraseRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        document.getElementById('record-phrase-btn').style.display = 'none';
+        document.getElementById('stop-phrase-btn').style.display = 'none';
+        document.getElementById('save-phrase-btn').style.display = 'block';
+        document.getElementById('recording-status').textContent = '✅ Recording saved! Ready to submit';
+      }
+    }
+
+    function stopDialogueRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        document.getElementById('record-dialogue-btn').style.display = 'none';
+        document.getElementById('stop-dialogue-btn').style.display = 'none';
+        document.getElementById('save-dialogue-btn').style.display = 'block';
+        document.getElementById('dialogue-recording-status').textContent = '✅ Recording saved! Ready to submit';
+      }
+    }
+
+    async function savePhraseRecording() {
+      const chinese = document.getElementById('phrase-chinese').value;
+      const romanized = document.getElementById('phrase-romanized').value;
+      const english = document.getElementById('phrase-english').value;
+      const category = document.getElementById('phrase-category').value;
+
+      if (!chinese || !romanized || !english) {
+        showNotification('Please fill all fields', '#ef4444');
+        return;
+      }
+
+      if (recordedChunks.length === 0) {
+        showNotification('No audio recorded', '#ef4444');
+        return;
+      }
+
+      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64Audio = reader.result;
+        const result = await window.dataSdk.create({
+          phrase_chinese: chinese,
+          phrase_romanized: romanized,
+          phrase_english: english,
+          category: category,
+          audio_url: base64Audio,
+          is_dialogue: false
+        });
+
+        if (result.isOk) {
+          showNotification('✓ Phrase saved!', '#10b981');
+          closeModal();
+        } else {
+          showNotification('Failed to save phrase', '#ef4444');
+        }
+      };
+      reader.readAsDataURL(blob);
+    }
+
+    async function saveDialogueRecording() {
+      const dialogueId = document.getElementById('dialogue-id').value;
+      const speaker = document.getElementById('dialogue-speaker').value;
+      const chinese = document.getElementById('dialogue-chinese').value;
+      const romanized = document.getElementById('dialogue-romanized').value;
+      const english = document.getElementById('dialogue-english').value;
+
+      if (!dialogueId || !chinese || !romanized || !english) {
+        showNotification('Please fill all fields', '#ef4444');
+        return;
+      }
+
+      if (recordedChunks.length === 0) {
+        showNotification('No audio recorded', '#ef4444');
+        return;
+      }
+
+      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64Audio = reader.result;
+        const result = await window.dataSdk.create({
+          phrase_chinese: chinese,
+          phrase_romanized: romanized,
+          phrase_english: english,
+          dialogue_id: dialogueId,
+          speaker: speaker,
+          audio_url: base64Audio,
+          is_dialogue: true
+        });
+
+        if (result.isOk) {
+          showNotification('✓ Dialogue saved!', '#10b981');
+          closeModal();
+        } else {
+          showNotification('Failed to save dialogue', '#ef4444');
+        }
+      };
+      reader.readAsDataURL(blob);
+    }
+
+    async function editPhrase(phraseInput) {
+      // Handle both phrase objects and IDs
+      let phrase;
+      let phraseId;
+      
+      if (typeof phraseInput === 'string') {
+        phrase = allStoredPhrases.find(p => p.__backendId === phraseInput);
+        phraseId = phraseInput;
+      } else {
+        phrase = phraseInput;
+        phraseId = phrase.__backendId;
+      }
+      
+      if (!phrase) return;
+
+      showModal(`
+        <h3 class="text-2xl font-chinese font-bold mb-6" style="color: #1f2937;">✏️ Edit Phrase</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">Chinese Characters</label>
+            <input type="text" id="edit-phrase-chinese" placeholder="Chinese" value="${phrase.phrase_chinese}" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+          </div>
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">Romanized</label>
+            <input type="text" id="edit-phrase-romanized" placeholder="Romanized" value="${phrase.phrase_romanized}" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+          </div>
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">English Translation</label>
+            <input type="text" id="edit-phrase-english" placeholder="English" value="${phrase.phrase_english}" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+          </div>
+          <div>
+            <label class="block text-sm font-body mb-1" style="color: #6b7280;">Category</label>
+            <select id="edit-phrase-category" style="width: 100%; padding: 12px; border: 1px solid #e8e0d5; border-radius: 8px; box-sizing: border-box;">
+              <option value="greetings" ${phrase.category === 'greetings' ? 'selected' : ''}>🤝 Greetings</option>
+              <option value="daily" ${phrase.category === 'daily' ? 'selected' : ''}>💬 Daily</option>
+              <option value="food" ${phrase.category === 'food' ? 'selected' : ''}>🍽️ Food</option>
+              <option value="family" ${phrase.category === 'family' ? 'selected' : ''}>👨‍👩‍👧 Family</option>
+              <option value="numbers" ${phrase.category === 'numbers' ? 'selected' : ''}>🔢 Numbers</option>
+              <option value="shopping" ${phrase.category === 'shopping' ? 'selected' : ''}>🛍️ Shopping</option>
+              <option value="health" ${phrase.category === 'health' ? 'selected' : ''}>🏥 Health</option>
+              <option value="travel" ${phrase.category === 'travel' ? 'selected' : ''}>✈️ Travel</option>
+            </select>
+          </div>
+          <div style="background-color: #dbeafe; padding: 12px; border-radius: 8px;">
+            <p class="font-body text-sm" style="color: #0c4a6e;">Current audio: ${phrase.audio_url ? '✅ Recorded' : '❌ No audio'}</p>
+          </div>
+          ${phrase.audio_url ? '<button onclick="playPhrase(\''+phraseId+'\')" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #d1fae5; color: #166534; border: none; cursor: pointer;">🔊 Play Current Audio</button>' : ''}
+          <button id="record-edit-btn" onclick="startEditRecording()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #86efac; color: #166534; border: none; cursor: pointer;">🎙️ ${phrase.audio_url ? 'Re-record' : 'Record'} Audio</button>
+          <button id="stop-edit-btn" onclick="stopEditRecording()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #f87171; color: white; border: none; cursor: pointer; display: none;">⏹️ Stop Recording</button>
+          <button onclick="updatePhrase()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #60a5fa; color: white; border: none; cursor: pointer;">💾 Save All Changes</button>
+        </div>
+      `);
+      
+      // Store current phrase data in window for updatePhrase access
+      window._editingPhrase = phrase;
+    }
+
+    let currentEditPhraseId = null;
+
+    async function updatePhrase() {
+      const phrase = window._editingPhrase;
+      if (!phrase) return;
+
+      const updated = {
+        ...phrase,
+        phrase_chinese: document.getElementById('edit-phrase-chinese').value,
+        phrase_romanized: document.getElementById('edit-phrase-romanized').value,
+        phrase_english: document.getElementById('edit-phrase-english').value,
+        category: document.getElementById('edit-phrase-category').value
+      };
+
+      if (!phrase.__backendId) {
+        if (recordedChunks.length === 0) {
+          showNotification('Please record audio for new phrase', '#ef4444');
+          return;
+        }
+        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const base64Audio = reader.result;
+          const result = await window.dataSdk.create({
+            phrase_chinese: updated.phrase_chinese,
+            phrase_romanized: updated.phrase_romanized,
+            phrase_english: updated.phrase_english,
+            category: updated.category,
+            audio_url: base64Audio,
+            is_dialogue: false
+          });
+          if (result.isOk) {
+            showNotification('✓ Phrase saved!', '#10b981');
+            closeModal();
+          } else {
+            showNotification('Failed to save phrase', '#ef4444');
+          }
+        };
+        reader.readAsDataURL(blob);
+      } else {
+        if (recordedChunks.length > 0) {
+          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.onload = async () => {
+            updated.audio_url = reader.result;
+            const result = await window.dataSdk.update(updated);
+            if (result.isOk) {
+              showNotification('✓ Phrase updated!', '#10b981');
+              closeModal();
+            } else {
+              showNotification('Failed to update phrase', '#ef4444');
+            }
+          };
+          reader.readAsDataURL(blob);
+        } else {
+          const result = await window.dataSdk.update(updated);
+          if (result.isOk) {
+            showNotification('✓ Phrase updated!', '#10b981');
+            closeModal();
+          } else {
+            showNotification('Failed to update phrase', '#ef4444');
+          }
+        }
+      }
+    }
+
+    async function startEditRecording() {
+      try {
+        recordedChunks = [];
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
+        mediaRecorder.start();
+        document.getElementById('record-edit-btn').style.display = 'none';
+        document.getElementById('stop-edit-btn').style.display = 'block';
+      } catch (err) {
+        showNotification('Microphone access denied', '#ef4444');
+      }
+    }
+
+    function stopEditRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        document.getElementById('record-edit-btn').style.display = 'block';
+        document.getElementById('stop-edit-btn').style.display = 'none';
+      }
+    }
+
+    async function updatePhrase(phraseId) {
+      const phrase = allStoredPhrases.find(p => p.__backendId === phraseId);
+      if (!phrase) return;
+
+      const updated = {
+        ...phrase,
+        phrase_chinese: document.getElementById('edit-phrase-chinese').value,
+        phrase_romanized: document.getElementById('edit-phrase-romanized').value,
+        phrase_english: document.getElementById('edit-phrase-english').value,
+        category: document.getElementById('edit-phrase-category').value
+      };
+
+      if (recordedChunks.length > 0) {
+        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = async () => {
+          updated.audio_url = reader.result;
+          const result = await window.dataSdk.update(updated);
+          if (result.isOk) {
+            showNotification('✓ Phrase updated!', '#10b981');
+            closeModal();
+          } else {
+            showNotification('Failed to update phrase', '#ef4444');
+          }
+        };
+        reader.readAsDataURL(blob);
+      } else {
+        const result = await window.dataSdk.update(updated);
+        if (result.isOk) {
+          showNotification('✓ Phrase updated!', '#10b981');
+          closeModal();
+        } else {
+          showNotification('Failed to update phrase', '#ef4444');
+        }
+      }
+    }
+
+    async function deletePhrase(phraseId) {
+      const phrase = allStoredPhrases.find(p => p.__backendId === phraseId);
+      if (!phrase) return;
+
+      showModal(`
+        <h3 class="text-xl font-chinese font-bold mb-6" style="color: #1f2937;">Delete Phrase?</h3>
+        <p class="font-body mb-6" style="color: #6b7280;">Are you sure you want to delete this phrase?</p>
+        <div class="space-y-3">
+          <button onclick="confirmDelete('${phraseId}')" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #fee2e2; color: #991b1b; border: none; cursor: pointer;">Yes, Delete</button>
+          <button onclick="closeModal()" class="w-full px-6 py-3 rounded-lg font-body font-bold" style="background-color: #e5e7eb; color: #1f2937; border: none; cursor: pointer;">Cancel</button>
+        </div>
+      `);
+    }
+
+    async function confirmDelete(phraseId) {
+      const phrase = allStoredPhrases.find(p => p.__backendId === phraseId);
+      if (!phrase) return;
+
+      const result = await window.dataSdk.delete(phrase);
+      if (result.isOk) {
+        showNotification('✓ Phrase deleted!', '#10b981');
+        closeModal();
+      } else {
+        showNotification('Failed to delete phrase', '#ef4444');
+      }
+    }
+
+    const STARTER_PHRASES = [
+      // Greetings (25+)
+      { phrase_chinese: '你好', phrase_romanized: 'Nṳ̄ hō̤', phrase_english: 'Hello', category: 'greetings' },
+      { phrase_chinese: '早安', phrase_romanized: 'Tso̤ ôⁿ', phrase_english: 'Good morning', category: 'greetings' },
+      { phrase_chinese: '晚安', phrase_romanized: 'Bhuân ôⁿ', phrase_english: 'Good evening', category: 'greetings' },
+      { phrase_chinese: '謝謝', phrase_romanized: 'Tshiá tshiá', phrase_english: 'Thank you', category: 'greetings' },
+      { phrase_chinese: '對不起', phrase_romanized: 'Tuī put tshik', phrase_english: 'Sorry', category: 'greetings' },
+      { phrase_chinese: '再見', phrase_romanized: 'Tsái kìⁿ', phrase_english: 'Goodbye', category: 'greetings' },
+      { phrase_chinese: '拜拜', phrase_romanized: 'Puái puái', phrase_english: 'Bye bye', category: 'greetings' },
+      { phrase_chinese: '不客氣', phrase_romanized: 'Put khuik khuè', phrase_english: "You're welcome", category: 'greetings' },
+      { phrase_chinese: '請坐', phrase_romanized: 'Tshiánn tshue', phrase_english: 'Please sit', category: 'greetings' },
+      { phrase_chinese: '歡迎', phrase_romanized: 'Huan guinn', phrase_english: 'Welcome', category: 'greetings' },
+      { phrase_chinese: '你好嗎', phrase_romanized: 'Nṳ̄ hō̤ muē', phrase_english: 'How are you?', category: 'greetings' },
+      { phrase_chinese: '我很好', phrase_romanized: 'Guá huín hó', phrase_english: 'I am fine', category: 'greetings' },
+      { phrase_chinese: '很高興', phrase_romanized: 'Huín Ko-hiⁿ', phrase_english: 'Very happy', category: 'greetings' },
+      { phrase_chinese: '見到你很高興', phrase_romanized: 'Kiⁿ kàu nǐ huín Ko-hiⁿ', phrase_english: 'Nice to see you', category: 'greetings' },
+      { phrase_chinese: '你呢', phrase_romanized: 'Nṳ̄ ne', phrase_english: 'And you?', category: 'greetings' },
+      { phrase_chinese: '我叫', phrase_romanized: 'Guá kiò', phrase_english: 'My name is', category: 'greetings' },
+      { phrase_chinese: '你叫什麼名', phrase_romanized: 'Nṳ̄ kiò tsia̍p muē buîn', phrase_english: 'What is your name?', category: 'greetings' },
+      { phrase_chinese: '請問', phrase_romanized: 'Tshiánn buân', phrase_english: 'Excuse me', category: 'greetings' },
+      { phrase_chinese: '沒關係', phrase_romanized: 'Bue kuaⁿ kue', phrase_english: 'No problem', category: 'greetings' },
+      { phrase_chinese: '慢走', phrase_romanized: 'Buân tsiáu', phrase_english: 'Take your time', category: 'greetings' },
+      { phrase_chinese: '好的', phrase_romanized: 'Hó--ik', phrase_english: 'OK', category: 'greetings' },
+      { phrase_chinese: '明白', phrase_romanized: 'Bia̍t pe̍k', phrase_english: 'Understand', category: 'greetings' },
+      { phrase_chinese: '可以', phrase_romanized: 'Kua Í', phrase_english: 'Can', category: 'greetings' },
+      { phrase_chinese: '好嗎', phrase_romanized: 'Hó muē', phrase_english: 'Is it OK?', category: 'greetings' },
+      { phrase_chinese: '不好意思', phrase_romanized: 'Put hó i su', phrase_english: 'Embarrassed', category: 'greetings' },
+      // Daily (25+)
+      { phrase_chinese: '今天', phrase_romanized: 'Kin thinn', phrase_english: 'Today', category: 'daily' },
+      { phrase_chinese: '明天', phrase_romanized: 'Bia thinn', phrase_english: 'Tomorrow', category: 'daily' },
+      { phrase_chinese: '昨天', phrase_romanized: 'Tshok thinn', phrase_english: 'Yesterday', category: 'daily' },
+      { phrase_chinese: '現在', phrase_romanized: 'Guân tsái', phrase_english: 'Now', category: 'daily' },
+      { phrase_chinese: '時間', phrase_romanized: 'Tsû kuân', phrase_english: 'Time', category: 'daily' },
+      { phrase_chinese: '幾點', phrase_romanized: 'Kuá tiá', phrase_english: 'What time?', category: 'daily' },
+      { phrase_chinese: '早上', phrase_romanized: 'Tso̤ tsiong', phrase_english: 'Morning', category: 'daily' },
+      { phrase_chinese: '下午', phrase_romanized: 'Huē ho', phrase_english: 'Afternoon', category: 'daily' },
+      { phrase_chinese: '晚上', phrase_romanized: 'Bhuân tsiong', phrase_english: 'Evening', category: 'daily' },
+      { phrase_chinese: '天氣', phrase_romanized: 'Thinn khuè', phrase_english: 'Weather', category: 'daily' },
+      { phrase_chinese: '下雨', phrase_romanized: 'Huē hoo', phrase_english: 'Raining', category: 'daily' },
+      { phrase_chinese: '太陽', phrase_romanized: 'Thái iûnn', phrase_english: 'Sun', category: 'daily' },
+      { phrase_chinese: '月亮', phrase_romanized: 'Gueh niô', phrase_english: 'Moon', category: 'daily' },
+      { phrase_chinese: '星星', phrase_romanized: 'Tshinn tshinn', phrase_english: 'Stars', category: 'daily' },
+      { phrase_chinese: '很冷', phrase_romanized: 'Huín luinn', phrase_english: 'Very cold', category: 'daily' },
+      { phrase_chinese: '很熱', phrase_romanized: 'Huín jua̍k', phrase_english: 'Very hot', category: 'daily' },
+      { phrase_chinese: '下班', phrase_romanized: 'Huē tsuann', phrase_english: 'Off work', category: 'daily' },
+      { phrase_chinese: '工作', phrase_romanized: 'Kiann tshok', phrase_english: 'Work', category: 'daily' },
+      { phrase_chinese: '學習', phrase_romanized: 'Hok tsiok', phrase_english: 'Study', category: 'daily' },
+      { phrase_chinese: '睡覺', phrase_romanized: 'Tshue kòa', phrase_english: 'Sleep', category: 'daily' },
+      { phrase_chinese: '起床', phrase_romanized: 'Khi tshong', phrase_english: 'Wake up', category: 'daily' },
+      { phrase_chinese: '洗澡', phrase_romanized: 'Tshé pò', phrase_english: 'Shower', category: 'daily' },
+      { phrase_chinese: '看電視', phrase_romanized: 'Khuann Tin su', phrase_english: 'Watch TV', category: 'daily' },
+      { phrase_chinese: '讀書', phrase_romanized: 'Tsiok tsu', phrase_english: 'Read', category: 'daily' },
+      { phrase_chinese: '寫字', phrase_romanized: 'Tshia tsi', phrase_english: 'Write', category: 'daily' },
+      // Food (25+)
+      { phrase_chinese: '我要食飯', phrase_romanized: 'Nguái iáu tsiok phunn', phrase_english: 'I want to eat', category: 'food' },
+      { phrase_chinese: '好食', phrase_romanized: 'Huó tsiok', phrase_english: 'Delicious', category: 'food' },
+      { phrase_chinese: '茶', phrase_romanized: 'Tshue', phrase_english: 'Tea', category: 'food' },
+      { phrase_chinese: '水', phrase_romanized: 'Tsuí', phrase_english: 'Water', category: 'food' },
+      { phrase_chinese: '米飯', phrase_romanized: 'Bí phunn', phrase_english: 'Rice', category: 'food' },
+      { phrase_chinese: '麵', phrase_romanized: 'Bî', phrase_english: 'Noodles', category: 'food' },
+      { phrase_chinese: '魚', phrase_romanized: 'Hu', phrase_english: 'Fish', category: 'food' },
+      { phrase_chinese: '肉', phrase_romanized: 'Hiok', phrase_english: 'Meat', category: 'food' },
+      { phrase_chinese: '雞', phrase_romanized: 'Ke', phrase_english: 'Chicken', category: 'food' },
+      { phrase_chinese: '蔬菜', phrase_romanized: 'Tshoo tshài', phrase_english: 'Vegetables', category: 'food' },
+      { phrase_chinese: '水果', phrase_romanized: 'Tsuí kue', phrase_english: 'Fruit', category: 'food' },
+      { phrase_chinese: '蘋果', phrase_romanized: 'Pinn kue', phrase_english: 'Apple', category: 'food' },
+      { phrase_chinese: '香蕉', phrase_romanized: 'Thiann tsiô', phrase_english: 'Banana', category: 'food' },
+      { phrase_chinese: '麵包', phrase_romanized: 'Bî pau', phrase_english: 'Bread', category: 'food' },
+      { phrase_chinese: '湯', phrase_romanized: 'Thong', phrase_english: 'Soup', category: 'food' },
+      { phrase_chinese: '醬油', phrase_romanized: 'Tsiong iu', phrase_english: 'Soy sauce', category: 'food' },
+      { phrase_chinese: '鹽', phrase_romanized: 'Iên', phrase_english: 'Salt', category: 'food' },
+      { phrase_chinese: '糖', phrase_romanized: 'Tong', phrase_english: 'Sugar', category: 'food' },
+      { phrase_chinese: '油', phrase_romanized: 'Iu', phrase_english: 'Oil', category: 'food' },
+      { phrase_chinese: '辣', phrase_romanized: 'Lua̍t', phrase_english: 'Spicy', category: 'food' },
+      { phrase_chinese: '甜', phrase_romanized: 'Tinn', phrase_english: 'Sweet', category: 'food' },
+      { phrase_chinese: '咸', phrase_romanized: 'Kiam', phrase_english: 'Salty', category: 'food' },
+      { phrase_chinese: '酸', phrase_romanized: 'Suan', phrase_english: 'Sour', category: 'food' },
+      { phrase_chinese: '苦', phrase_romanized: 'Khu', phrase_english: 'Bitter', category: 'food' },
+      { phrase_chinese: '餐廳', phrase_romanized: 'Tshann thiann', phrase_english: 'Restaurant', category: 'food' },
+      // Numbers (15+)
+      { phrase_chinese: '一', phrase_romanized: 'It', phrase_english: 'One', category: 'numbers' },
+      { phrase_chinese: '二', phrase_romanized: 'Jii', phrase_english: 'Two', category: 'numbers' },
+      { phrase_chinese: '三', phrase_romanized: 'Sann', phrase_english: 'Three', category: 'numbers' },
+      { phrase_chinese: '四', phrase_romanized: 'Sue', phrase_english: 'Four', category: 'numbers' },
+      { phrase_chinese: '五', phrase_romanized: 'Gu', phrase_english: 'Five', category: 'numbers' },
+      { phrase_chinese: '六', phrase_romanized: 'Liok', phrase_english: 'Six', category: 'numbers' },
+      { phrase_chinese: '七', phrase_romanized: 'Tshit', phrase_english: 'Seven', category: 'numbers' },
+      { phrase_chinese: '八', phrase_romanized: 'Pueh', phrase_english: 'Eight', category: 'numbers' },
+      { phrase_chinese: '九', phrase_romanized: 'Kau', phrase_english: 'Nine', category: 'numbers' },
+      { phrase_chinese: '十', phrase_romanized: 'Tsap', phrase_english: 'Ten', category: 'numbers' },
+      { phrase_chinese: '百', phrase_romanized: 'Pik', phrase_english: 'Hundred', category: 'numbers' },
+      { phrase_chinese: '千', phrase_romanized: 'Tshinn', phrase_english: 'Thousand', category: 'numbers' },
+      { phrase_chinese: '萬', phrase_romanized: 'Buán', phrase_english: 'Ten thousand', category: 'numbers' },
+      { phrase_chinese: '零', phrase_romanized: 'Línn', phrase_english: 'Zero', category: 'numbers' },
+      { phrase_chinese: '多少', phrase_romanized: 'To suóⁿ', phrase_english: 'How much?', category: 'numbers' },
+      // Family (15+)
+      { phrase_chinese: '家', phrase_romanized: 'Ka', phrase_english: 'Family', category: 'family' },
+      { phrase_chinese: '爸爸', phrase_romanized: 'Pa pa', phrase_english: 'Father', category: 'family' },
+      { phrase_chinese: '媽媽', phrase_romanized: 'Bua bua', phrase_english: 'Mother', category: 'family' },
+      { phrase_chinese: '哥哥', phrase_romanized: 'Ko ko', phrase_english: 'Brother', category: 'family' },
+      { phrase_chinese: '姐姐', phrase_romanized: 'Tsia tsia', phrase_english: 'Sister', category: 'family' },
+      { phrase_chinese: '弟弟', phrase_romanized: 'Thua thua', phrase_english: 'Younger brother', category: 'family' },
+      { phrase_chinese: '妹妹', phrase_romanized: 'Buē buē', phrase_english: 'Younger sister', category: 'family' },
+      { phrase_chinese: '奶奶', phrase_romanized: 'Linn linn', phrase_english: 'Grandmother', category: 'family' },
+      { phrase_chinese: '爺爺', phrase_romanized: 'Ia ia', phrase_english: 'Grandfather', category: 'family' },
+      { phrase_chinese: '伯伯', phrase_romanized: 'Pik pik', phrase_english: 'Uncle', category: 'family' },
+      { phrase_chinese: '阿姨', phrase_romanized: 'A i', phrase_english: 'Aunt', category: 'family' },
+      { phrase_chinese: '表哥', phrase_romanized: 'Pio ko', phrase_english: 'Cousin', category: 'family' },
+      { phrase_chinese: '表妹', phrase_romanized: 'Pio buē', phrase_english: 'Cousin (female)', category: 'family' },
+      { phrase_chinese: '老婆', phrase_romanized: 'Lo ue', phrase_english: 'Wife', category: 'family' },
+      { phrase_chinese: '老公', phrase_romanized: 'Lo kong', phrase_english: 'Husband', category: 'family' },
+      // Shopping (15+)
+      { phrase_chinese: '買', phrase_romanized: 'Buē', phrase_english: 'Buy', category: 'shopping' },
+      { phrase_chinese: '賣', phrase_romanized: 'Bue', phrase_english: 'Sell', category: 'shopping' },
+      { phrase_chinese: '錢', phrase_romanized: 'Tsuinn', phrase_english: 'Money', category: 'shopping' },
+      { phrase_chinese: '多少錢', phrase_romanized: 'To suóⁿ tsuinn', phrase_english: 'How much?', category: 'shopping' },
+      { phrase_chinese: '便宜', phrase_romanized: 'Pinn i', phrase_english: 'Cheap', category: 'shopping' },
+      { phrase_chinese: '貴', phrase_romanized: 'Kuè', phrase_english: 'Expensive', category: 'shopping' },
+      { phrase_chinese: '商店', phrase_romanized: 'Tsiong tiann', phrase_english: 'Shop', category: 'shopping' },
+      { phrase_chinese: '超市', phrase_romanized: 'Tshiau tsi', phrase_english: 'Supermarket', category: 'shopping' },
+      { phrase_chinese: '市場', phrase_romanized: 'Tsi tsiong', phrase_english: 'Market', category: 'shopping' },
+      { phrase_chinese: '衣服', phrase_romanized: 'I hok', phrase_english: 'Clothes', category: 'shopping' },
+      { phrase_chinese: '鞋', phrase_romanized: 'Hue', phrase_english: 'Shoes', category: 'shopping' },
+      { phrase_chinese: '包', phrase_romanized: 'Pau', phrase_english: 'Bag', category: 'shopping' },
+      { phrase_chinese: '帽子', phrase_romanized: 'Bue tsi', phrase_english: 'Hat', category: 'shopping' },
+      { phrase_chinese: '折扣', phrase_romanized: 'Tsiok khuok', phrase_english: 'Discount', category: 'shopping' },
+      { phrase_chinese: '發票', phrase_romanized: 'Huat phio', phrase_english: 'Receipt', category: 'shopping' },
+      // Health (15+)
+      { phrase_chinese: '醫生', phrase_romanized: 'I suinn', phrase_english: 'Doctor', category: 'health' },
+      { phrase_chinese: '醫院', phrase_romanized: 'I inn', phrase_english: 'Hospital', category: 'health' },
+      { phrase_chinese: '藥', phrase_romanized: 'Io̍k', phrase_english: 'Medicine', category: 'health' },
+      { phrase_chinese: '病', phrase_romanized: 'Pinn', phrase_english: 'Sick', category: 'health' },
+      { phrase_chinese: '頭痛', phrase_romanized: 'Thau thuinn', phrase_english: 'Headache', category: 'health' },
+      { phrase_chinese: '肚子痛', phrase_romanized: 'Too tsi thuinn', phrase_english: 'Stomach ache', category: 'health' },
+      { phrase_chinese: '發燒', phrase_romanized: 'Huat sio', phrase_english: 'Fever', category: 'health' },
+      { phrase_chinese: '咳嗽', phrase_romanized: 'Khue tshoo', phrase_english: 'Cough', category: 'health' },
+      { phrase_chinese: '感冒', phrase_romanized: 'Kam bue', phrase_english: 'Cold', category: 'health' },
+      { phrase_chinese: '過敏', phrase_romanized: 'Kue bin', phrase_english: 'Allergy', category: 'health' },
+      { phrase_chinese: '健康', phrase_romanized: 'Kin Hong', phrase_english: 'Healthy', category: 'health' },
+      { phrase_chinese: '運動', phrase_romanized: 'Un tong', phrase_english: 'Exercise', category: 'health' },
+      { phrase_chinese: '睡眠', phrase_romanized: 'Tshue binn', phrase_english: 'Sleep', category: 'health' },
+      { phrase_chinese: '疫苗', phrase_romanized: 'Ik buê', phrase_english: 'Vaccine', category: 'health' },
+      { phrase_chinese: '檢查', phrase_romanized: 'Kiam tshue', phrase_english: 'Checkup', category: 'health' },
+      // Travel (15+)
+      { phrase_chinese: '飛機', phrase_romanized: 'Hui ki', phrase_english: 'Airplane', category: 'travel' },
+      { phrase_chinese: '火車', phrase_romanized: 'Hue tshia', phrase_english: 'Train', category: 'travel' },
+      { phrase_chinese: '公車', phrase_romanized: 'Kong tshia', phrase_english: 'Bus', category: 'travel' },
+      { phrase_chinese: '計程車', phrase_romanized: 'Ke tsinn tshia', phrase_english: 'Taxi', category: 'travel' },
+      { phrase_chinese: '票', phrase_romanized: 'Phio', phrase_english: 'Ticket', category: 'travel' },
+      { phrase_chinese: '護照', phrase_romanized: 'Hoo tsiò', phrase_english: 'Passport', category: 'travel' },
+      { phrase_chinese: '飯店', phrase_romanized: 'Phunn tiann', phrase_english: 'Hotel', category: 'travel' },
+      { phrase_chinese: '房間', phrase_romanized: 'Pông Kuann', phrase_english: 'Room', category: 'travel' },
+      { phrase_chinese: '浴室', phrase_romanized: 'Io̍k Sit', phrase_english: 'Bathroom', category: 'travel' },
+      { phrase_chinese: '地圖', phrase_romanized: 'Tie Too', phrase_english: 'Map', category: 'travel' },
+      { phrase_chinese: '路', phrase_romanized: 'Loo', phrase_english: 'Road', category: 'travel' },
+      { phrase_chinese: '在哪裡', phrase_romanized: 'Tsai guá li', phrase_english: 'Where?', category: 'travel' },
+      { phrase_chinese: '怎麼去', phrase_romanized: 'Tsia bue khì', phrase_english: 'How to go?', category: 'travel' },
+      { phrase_chinese: '觀光', phrase_romanized: 'Kuan kong', phrase_english: 'Tourism', category: 'travel' },
+      { phrase_chinese: '景點', phrase_romanized: 'Kiann tiá', phrase_english: 'Attraction', category: 'travel' }
+    ];
+
+    const STARTER_DIALOGUES = [
+      { phrase_chinese: '你好', phrase_romanized: 'Nṳ̄ hō̤', phrase_english: 'Hello', dialogue_id: 'greeting-1', speaker: 'A', is_dialogue: true },
+      { phrase_chinese: '你好，今天好嗎？', phrase_romanized: 'Nṳ̄ hō̤, kin thinn', phrase_english: 'Hello, how are you?', dialogue_id: 'greeting-1', speaker: 'B', is_dialogue: true }
+    ];
+
+    async function init() {
+      initVisitorCount();
+      await initDataSDK();
+      setTimeout(() => {
+        renderPhrasesFor('greetings-container', 'greetings');
+        renderPhrasesFor('daily-container', 'daily');
+        renderPhrasesFor('food-container', 'food');
+        renderPhrasesFor('numbers-container', 'numbers');
+        renderPhrasesFor('family-container', 'family');
+        renderPhrasesFor('shopping-container', 'shopping');
+        renderDialogues();
+      }, 100);
+
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            if (document.getElementById('main-title')) 
+              document.getElementById('main-title').textContent = config.main_title || defaultConfig.main_title;
+            if (document.getElementById('welcome-text')) 
+              document.getElementById('welcome-text').textContent = config.welcome_text || defaultConfig.welcome_text;
+          },
+          mapToCapabilities: (config) => ({ recolorables: [], borderables: [], fontEditable: undefined, fontSizeable: undefined }),
+          mapToEditPanelValues: (config) => new Map([
+            ['main_title', config.main_title || defaultConfig.main_title],
+            ['welcome_text', config.welcome_text || defaultConfig.welcome_text]
+          ])
+        });
+      }
+
+      switchTab('greetings');
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9da2ef59e5f6454a',t:'MTc3MzE1MjE2My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
