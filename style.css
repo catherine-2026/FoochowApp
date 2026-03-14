@@ -1,126 +1,163 @@
 :root {
-  --emerald: #105246;
-  --gold: #d4af37;
-  --dark: #0a2621;
+    --emerald-dark: #051a17;
+    --emerald-light: #105246;
+    --gold: #d4af37;
+    --text-dim: rgba(255, 255, 255, 0.6);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  margin: 0;
-  background-color: var(--dark);
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  overflow: hidden;
+    background-color: #000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
 }
 
-.app-window {
-  width: 100%;
-  max-width: 400px;
-  height: 100vh;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: white;
+.app-container {
+    width: 100%;
+    max-width: 430px; /* iPhone Pro Max width */
+    height: 100%;
+    background: radial-gradient(circle at top, var(--emerald-light) 0%, var(--emerald-dark) 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 30px;
+    position: relative;
 }
 
-.bg-glow {
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  background: var(--emerald);
-  filter: blur(100px);
-  opacity: 0.4;
-  z-index: -1;
+.glow {
+    position: absolute;
+    width: 200%;
+    height: 40%;
+    top: 30%;
+    left: -50%;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+    pointer-events: none;
 }
 
-.welcome-text {
-  letter-spacing: 4px;
-  font-size: 0.7rem;
-  opacity: 0.6;
-  margin-bottom: 40px;
+/* Header badge */
+.badge {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 5px 15px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    font-weight: bold;
 }
 
-/* THE LOGO BUTTON */
-.logo-container {
-  position: relative;
-  width: 220px;
-  height: 220px;
-  cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+.header { text-align: center; }
+
+/* Intro text */
+.intro {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.intro h1 {
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+}
+
+.intro p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-dim);
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+/* THE LOGO BUTTON SYSTEM */
+.button-centerpiece {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.app-trigger {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo-wrapper {
+    position: relative;
+    width: 200px;
+    height: 200px;
 }
 
 .main-logo {
-  width: 100%;
-  height: 100%;
-  border-radius: 45px; /* Matches the rounded app icon shape */
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5), 
-              0 0 20px rgba(212, 175, 55, 0.2);
-  position: relative;
-  z-index: 5;
+    width: 100%;
+    height: 100%;
+    border-radius: 44px; /* Matches modern iOS app icons */
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    position: relative;
+    z-index: 5;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.logo-container:hover {
-  transform: scale(1.05);
+.app-trigger:active .main-logo {
+    transform: scale(0.92);
 }
 
-/* Gold Ripple Effect */
-.ripple, .ripple-2 {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  border: 2px solid var(--gold);
-  border-radius: 45px;
-  opacity: 0;
-  z-index: 1;
-  animation: ripple-out 3s infinite;
+/* Pulsating Rings */
+.ring-animation {
+    position: absolute;
+    top: -5%; left: -5%; width: 110%; height: 110%;
+    border: 1.5px solid var(--gold);
+    border-radius: 50px;
+    opacity: 0;
+    z-index: 1;
+    animation: ripple 3s infinite ease-out;
 }
 
-.ripple-2 {
-  animation-delay: 1.5s;
+.delay { animation-delay: 1.5s; }
+
+@keyframes ripple {
+    0% { transform: scale(0.9); opacity: 0; }
+    50% { opacity: 0.4; }
+    100% { transform: scale(1.4); opacity: 0; }
 }
 
-@keyframes ripple-out {
-  0% { transform: scale(1); opacity: 0.5; }
-  100% { transform: scale(1.4); opacity: 0; }
+.tap-label {
+    margin-top: 35px;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    color: var(--gold);
+    animation: blink 2s infinite;
 }
 
+@keyframes blink {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+/* System Bar */
 .footer {
-  margin-top: 50px;
-  text-align: center;
+    display: flex;
+    justify-content: center;
 }
 
-h2 {
-  font-weight: 300;
-  letter-spacing: 1px;
-  margin-bottom: 10px;
-}
-
-.footer p {
-  font-size: 0.85rem;
-  opacity: 0.5;
-}
-
-/* Aesthetic Loading Bar */
-.loading-bar {
-  width: 120px;
-  height: 2px;
-  background: rgba(255,255,255,0.1);
-  margin: 20px auto;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress {
-  width: 40%;
-  height: 100%;
-  background: var(--gold);
-  animation: load 2s ease-in-out infinite;
-}
-
-@keyframes load {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(250%); }
+.swipe-indicator {
+    width: 130px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
 }
